@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Astrology & Car Buying</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Astronomy Engine for accurate planetary calculations -->
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .rasi-box {
+            position: relative;
+        }
+        .center-box {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+        
+        /* Custom scrollbar for text areas */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-4 md:p-8 flex justify-center selection:bg-cyan-500/30">
+
+    <div class="w-full max-w-6xl space-y-8">
+        <div class="text-center pb-2">
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tracking-tight flex justify-center items-center gap-3">
+                <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                Vehicle Astrology HUD
+            </h1>
+            <p class="text-slate-400 text-sm mt-2 font-medium tracking-wide">Determine your lucky car registration using Parashari Varga Charts</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex space-x-6 border-b border-slate-700 mb-2">
+            <button id="btnTabChart" class="pb-2 text-cyan-400 border-b-2 border-cyan-400 font-bold transition-colors">Dashboard</button>
+            <button id="btnTabUnit4" class="pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors">Unit 4 Analysis</button>
+            <button id="btnTabVehicle" class="pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors">Reverse Lookup</button>
+        </div>
+
+        <!-- Chart Explorer Tab -->
+        <div id="tab-chart" class="space-y-8">
+            <!-- Error Box -->
+            <div id="errorBox" class="hidden bg-red-900/50 text-red-400 p-3 mb-4 border border-red-800 text-sm rounded-lg shadow-inner"></div>
+            
+            <!-- Input Form -->
+            <div class="bg-slate-800 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 border border-slate-700 p-5 rounded-xl shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-600 to-slate-500"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Name / Tags</label>
+                    <input type="text" id="inputName" value="Sarbani" class="w-full bg-slate-900 border-slate-700 border p-2 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Date (DMY)</label>
+                    <input type="date" id="inputDate" value="1960-09-01" class="w-full bg-slate-900 border-slate-700 border p-2 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all [color-scheme:dark]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Time (Local)</label>
+                    <input type="time" id="inputTime" step="1" value="15:25:00" class="w-full bg-slate-900 border-slate-700 border p-2 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all [color-scheme:dark]">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Search City</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="inputCity" class="w-full bg-slate-900 border-slate-700 border p-2 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all" placeholder="e.g. New Delhi">
+                        <button id="searchCityBtn" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-md">Search</button>
+                    </div>
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Lat / Lng / Tz</label>
+                    <div class="flex gap-1">
+                        <input type="number" id="inputLat" step="any" value="17.3833" class="w-1/3 bg-slate-900 border-slate-700 border p-2 text-xs text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all" title="Lat" placeholder="Lat">
+                        <input type="number" id="inputLon" step="any" value="78.4667" class="w-1/3 bg-slate-900 border-slate-700 border p-2 text-xs text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all" title="Lng" placeholder="Lng">
+                        <input type="number" id="inputTz" step="0.5" value="5.5" class="w-1/3 bg-slate-900 border-slate-700 border p-2 text-xs text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all" title="Timezone Offset" placeholder="Tz">
+                    </div>
+                </div>
+                <div class="lg:col-span-6 flex justify-end pt-3">
+                    <button id="calculateBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white py-2.5 px-8 text-sm font-bold tracking-wide rounded-lg transition-all shadow-lg shadow-cyan-900/20">
+                        Initialize Telemetry
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultsArea" class="space-y-12 hidden pt-4">
+                 <!-- Dynamic Vehicle Input Section -->
+                 <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-2xl w-full max-w-3xl mx-auto text-center relative overflow-hidden">
+                     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+                     <h2 class="text-2xl font-black text-slate-100 mb-2 tracking-wide uppercase">Live Plate Tester</h2>
+                     <p class="text-sm text-slate-400 mb-6 font-medium">Type a number to instantly see effects on the D16 (Mount) chart.</p>
+                     
+                     <div class="flex justify-center items-end gap-6">
+                         <div class="w-full max-w-xs mx-auto">
+                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest text-left">Vehicle Reg No.</label>
+                             <div class="p-1.5 bg-slate-300 rounded-lg shadow-inner">
+                                 <input type="text" id="inputVehicle" value="2961" class="w-full bg-yellow-400 border-4 border-slate-800 p-2 text-3xl text-center font-black focus:border-slate-900 rounded outline-none uppercase shadow-sm text-slate-900 placeholder-slate-600 tracking-[0.2em]" placeholder="6004">
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- Live Vehicle Analysis Dashboard Block -->
+                 <div id="vehicleDashboard" class="hidden grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mx-auto mb-8">
+                     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden">
+                         <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-bl-full -z-10"></div>
+                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-4">Core Identifiers</h3>
+                         <div class="space-y-3 text-sm">
+                             <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">VNR (Mount Rāśi):</span> <span id="dashVnr" class="font-bold text-indigo-400 text-base"></span></div>
+                             <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">VNG (Mount Graha):</span> <span id="dashVng" class="font-bold text-amber-400 text-base"></span></div>
+                             <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">D16 AL (Ārūḍha):</span> <span id="dashAl" class="font-bold text-slate-200 text-base"></span></div>
+                         </div>
+                     </div>
+                     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden">
+                         <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-bl-full -z-10"></div>
+                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-4">Manifestation Effect</h3>
+                         <div class="text-sm flex flex-col h-[calc(100%-2.5rem)] justify-center">
+                             <p class="mb-2 text-slate-400 font-medium">Mount sits <span id="dashHouseFromAl" class="font-bold text-slate-200"></span> from D16 AL.</p>
+                             <p id="dashManifestation" class="font-black text-xl text-emerald-400 uppercase tracking-wide leading-tight"></p>
+                         </div>
+                     </div>
+                     <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden">
+                         <div class="absolute top-0 right-0 w-20 h-20 bg-rose-500/10 rounded-bl-full -z-10"></div>
+                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-4">Ideal Vehicle Type</h3>
+                         <div class="text-sm flex flex-col h-[calc(100%-2.5rem)] justify-center">
+                             <p class="mb-2 text-slate-400 font-medium">Based on D16 4th House (<span id="dash4thInfo" class="text-slate-300"></span>)</p>
+                             <p id="dashCarType" class="font-bold text-base text-rose-400 leading-snug"></p>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- Shared Family Vehicle Dashboard -->
+                 <div class="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-xl w-full max-w-5xl mx-auto mb-8 relative overflow-hidden">
+                     <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+                     <h2 class="text-xl font-black text-slate-100 mb-2 tracking-wide uppercase">Shared Family Vehicle Targets (D1)</h2>
+                     <p class="text-sm text-slate-400 mb-5 font-medium leading-relaxed">
+                         <strong class="text-cyan-400">VNG (Practical Compatibility):</strong> To find a family car, analyze strictly from the D1 Lagna. Compare the 4H, 4L, and A4 targets below with your partner's chart. The <strong class="text-slate-200 border-b border-slate-500">common, well-placed planet</strong> dictates the VNG, ideal Car Color, and Brand (e.g., Saturn = 'M' for Mercedes).
+                     </p>
+                     
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                         <div class="bg-slate-900 p-5 rounded-lg shadow-inner border border-slate-700/50">
+                             <div class="text-xs font-bold text-cyan-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-3">4H (4th House)</div>
+                             <div class="text-sm mb-2"><span class="font-medium text-slate-500">Rāśi:</span> <span id="dashD1_4H_Rasi" class="text-slate-200 font-bold"></span></div>
+                             <div class="text-sm"><span class="font-medium text-slate-500">Occupants:</span> <span id="dashD1_4H_Planets" class="text-slate-300 font-medium"></span></div>
+                         </div>
+                         <div class="bg-slate-900 p-5 rounded-lg shadow-inner border border-slate-700/50">
+                             <div class="text-xs font-bold text-cyan-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-3">4L (4th Lord)</div>
+                             <div class="text-sm mb-2"><span class="font-medium text-slate-500">Lord:</span> <span id="dashD1_4L" class="text-cyan-400 font-black"></span></div>
+                             <div class="text-sm"><span class="font-medium text-slate-500">Placed in:</span> <span id="dashD1_4L_Rasi" class="text-slate-200 font-bold"></span></div>
+                         </div>
+                         <div class="bg-slate-900 p-5 rounded-lg shadow-inner border border-slate-700/50">
+                             <div class="text-xs font-bold text-cyan-500 uppercase tracking-widest border-b border-slate-700 pb-2 mb-3">A4 (Vahana Pada)</div>
+                             <div class="text-sm mb-2"><span class="font-medium text-slate-500">Rāśi:</span> <span id="dashD1_A4_Rasi" class="text-slate-200 font-bold"></span></div>
+                             <div class="text-sm"><span class="font-medium text-slate-500">Occupants:</span> <span id="dashD1_A4_Planets" class="text-slate-300 font-medium"></span></div>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- 1. Varga Charts (Divisional Grids) -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10 w-full max-w-5xl mx-auto" id="chartsContainer">
+                     <div id="chart-d1"></div>
+                     <div id="chart-d9"></div>
+                     <div id="chart-d16"></div>
+                     <div id="chart-d60"></div>
+                 </div>
+
+                 <!-- 2. Text Report Output -->
+                 <div class="w-full flex flex-col items-center pb-8">
+                     <div class="w-full max-w-[56rem] mx-auto bg-slate-800 p-6 border border-slate-700 rounded-xl shadow-lg relative group">
+                         <button id="copyBtn" class="absolute top-4 right-4 bg-slate-700 border border-slate-600 hover:bg-slate-600 text-slate-200 px-4 py-1.5 text-xs font-bold rounded-lg transition-colors opacity-0 group-hover:opacity-100 cursor-pointer shadow-md">
+                            Copy Report
+                         </button>
+                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-700 pb-2">Telemetry Log</h3>
+                         <pre id="textReportContent" class="whitespace-pre-wrap font-mono text-sm text-slate-300 leading-relaxed"></pre>
+                     </div>
+                 </div>
+            </div>
+        </div> <!-- End of tab-chart -->
+
+        <!-- Unit 4 Analysis Tab -->
+        <div id="tab-unit4" class="hidden space-y-6">
+            <div class="bg-slate-800 border border-slate-700 p-8 rounded-xl shadow-2xl relative overflow-hidden max-w-5xl mx-auto">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-orange-500"></div>
+                <h2 class="text-2xl font-black text-slate-100 mb-2 tracking-wide uppercase">Timing & Placement Case Study</h2>
+                <p class="text-sm text-slate-400 mb-6 font-medium">Enter the purchase date to evaluate Vimshottari Dasha timing against the vehicle selected in the Dashboard.</p>
+                <div class="flex items-end gap-6">
+                    <div class="w-full max-w-xs">
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest text-left">Purchase Date</label>
+                        <input type="date" id="inputPurchaseDate" value="1995-05-15" class="w-full bg-slate-900 border-slate-600 border p-3.5 text-lg text-center font-bold focus:border-cyan-500 rounded-lg outline-none shadow-inner text-slate-100 placeholder-slate-500 h-[68px] [color-scheme:dark]">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Teaching Unit 4 Analysis Box -->
+            <div id="unit4Container" class="w-full max-w-5xl mx-auto mt-6"></div>
+        </div>
+
+        <!-- Reverse Vehicle Lookup Tab -->
+        <div id="tab-vehicle" class="hidden space-y-6">
+            <div class="bg-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-700 p-6 rounded-xl shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Desired VNR (Rāśi)</label>
+                    <select id="searchRasi" class="w-full bg-slate-900 border-slate-700 border p-2.5 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all">
+                        <option value="0">Aries</option>
+                        <option value="1">Taurus</option>
+                        <option value="2">Gemini</option>
+                        <option value="3">Cancer</option>
+                        <option value="4">Leo</option>
+                        <option value="5">Virgo</option>
+                        <option value="6">Libra</option>
+                        <option value="7">Scorpio</option>
+                        <option value="8">Sagittarius</option>
+                        <option value="9">Capricorn</option>
+                        <option value="10">Aquarius</option>
+                        <option value="11">Pisces</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Desired VNG (Graha)</label>
+                    <select id="searchGraha" class="w-full bg-slate-900 border-slate-700 border p-2.5 text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-lg outline-none transition-all">
+                        <option value="1">Sun (1)</option>
+                        <option value="2">Moon (2)</option>
+                        <option value="3">Jupiter (3)</option>
+                        <option value="4">Rahu (4)</option>
+                        <option value="5">Mercury (5)</option>
+                        <option value="6">Venus (6)</option>
+                        <option value="7">Ketu (7)</option>
+                        <option value="8">Saturn (8)</option>
+                        <option value="9">Mars (9)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="searchVehicleBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 px-8 text-sm font-bold tracking-wide rounded-lg transition-all shadow-lg shadow-emerald-900/20">
+                        Scan Database
+                    </button>
+                </div>
+            </div>
+            
+            <div id="vehicleSearchResults" class="hidden bg-slate-800 p-6 border border-slate-700 rounded-xl shadow-lg">
+                <div class="flex justify-between items-center mb-5 border-b border-slate-700 pb-3">
+                    <h2 class="text-xl font-black text-slate-100 uppercase tracking-wide">Matching Plates</h2>
+                    <div class="flex items-center gap-3">
+                        <button id="copyPlatesBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 text-xs font-bold tracking-widest uppercase rounded shadow-md transition-colors border border-slate-600">Copy All</button>
+                        <span id="matchCount" class="text-xs font-black bg-cyan-900/50 border border-cyan-700 text-cyan-400 px-3 py-1.5 rounded-full shadow-inner"></span>
+                    </div>
+                </div>
+                <div id="vehicleMatchesGrid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-3 text-sm font-mono text-center text-slate-300">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const planetLabels = { Sun: "Su", Moon: "Mo", Mars: "Ma", Mercury: "Me", Jupiter: "Ju", Venus: "Ve", Saturn: "Sa", Rahu: "Ra", Ketu: "Ke", Asc: "As" };
+        const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu'];
+        const rasiNames = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+        const rasiLords = ['Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter'];
+        
+        // Vimshottari Dasha definitions
+        const dashaLords = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+        const dashaYears = [7, 20, 6, 10, 7, 18, 16, 19, 17];
+
+        const arudhaTemplate = {
+            1: "Manifested Image", 2: "Wealth Support", 3: "Relationship Conflicts/Agreements",
+            4: "Home Peace", 5: "Image Change", 6: "Weaknesses", 7: "Dvāra (Door) Interaction",
+            8: "Serious Troubles", 9: "Image Protect", 10: "Work Quality", 11: "Income Sources", 12: "Expenditure Sources"
+        };
+        
+        const vehicleTypeMap = {
+            'Mars': 'Security, 4x4, four-wheel drive, jeeps (e.g., Tata Sumo, Gypsy).',
+            'Moon': 'Fast, sporty cars (e.g., Ferrari).',
+            'Mercury': 'Second fastest, sports cars (e.g., Porsche).',
+            'Venus': 'Luxury defined (e.g., Mercedes).',
+            'Jupiter': 'Powerful luxury (e.g., Rolls Royce, Bentley).',
+            'Saturn': 'Utility, heavy, old or very reliable vehicles.',
+            'Sun': 'Status, flagship, or government vehicles.',
+            'Rahu': 'Imported, massive, or unconventional vehicles.',
+            'Ketu': 'Compact, subtle, or strange vehicles.'
+        };
+
+        function showError(msg) {
+            const errBox = document.getElementById('errorBox');
+            errBox.innerText = msg;
+            errBox.classList.remove('hidden');
+        }
+        function hideError() {
+            document.getElementById('errorBox').classList.add('hidden');
+        }
+
+        function formatDeg(deg) {
+            const d = Math.floor(deg);
+            const m = Math.floor((deg - d) * 60);
+            return `${d}°${m.toString().padStart(2, '0')}'`;
+        }
+
+        // Astronomical calculations
+        function getLahiriAyanamsa(date) {
+            const j2000 = new Date(Date.UTC(2000, 0, 1, 12, 0, 0));
+            const centuries = ((date.getTime() - j2000.getTime()) / 86400000) / 36525;
+            return 23.853056 + (centuries * (5029.0966 / 3600));
+        }
+
+        function getRahuLongitude(date, ayanamsa) {
+            const j2000 = new Date(Date.UTC(2000, 0, 1, 12, 0, 0));
+            const T = ((date.getTime() - j2000.getTime()) / 86400000.0) / 36525.0;
+            let omegaTrop = 125.04452 - 1934.136261 * T;
+            let omegaSidereal = (omegaTrop - ayanamsa) % 360;
+            return omegaSidereal < 0 ? omegaSidereal + 360 : omegaSidereal;
+        }
+
+        function getAscendant(date, lat, lon, ayanamsa) {
+            if (Math.abs(lat) === 90) lat = lat > 0 ? 89.99 : -89.99;
+            const time = new Astronomy.AstroTime(date);
+            let gmst = Astronomy.SiderealTime(time);
+            let lst = (gmst * 15 + lon) % 360;
+            if (lst < 0) lst += 360;
+
+            const T = (time.ut - 2451545.0) / 36525.0;
+            let eps = 23.439291 - 0.013004 * T;
+            let rad = Math.PI / 180;
+            
+            let y = Math.cos(lst * rad);
+            let x = -(Math.sin(lst * rad) * Math.cos(eps * rad) + Math.tan(lat * rad) * Math.sin(eps * rad));
+
+            let ascTropDeg = Math.atan2(y, x) / rad;
+            if (ascTropDeg < 0) ascTropDeg += 360;
+
+            let ascSidereal = (ascTropDeg - ayanamsa) % 360;
+            if (ascSidereal < 0) ascSidereal += 360;
+
+            return { rasi: Math.floor(ascSidereal / 30), degree: ascSidereal % 30 };
+        }
+
+        // Reusable South Indian Grid Renderer
+        function renderSouthIndianChart(containerId, title, planetsPos) {
+            let rasiContents = Array(12).fill().map(() => []);
+            
+            Object.keys(planetsPos).forEach(pKey => {
+                const pos = planetsPos[pKey];
+                rasiContents[pos.rasi].push(pos.html);
+            });
+
+            const r = (idx) => `
+                <div class="rasi-box border border-slate-700 bg-slate-800 p-1 flex flex-wrap content-start justify-center gap-0.5 min-h-[5rem]">
+                    <span class="absolute top-0.5 left-1 text-[9px] text-slate-500 font-bold">${idx+1}</span>
+                    ${rasiContents[idx].join('')}
+                </div>`;
+
+            let gridHtml = `
+            <div class="flex flex-col items-center w-full shadow-2xl rounded-xl p-4 bg-slate-800 border border-slate-700 relative overflow-hidden">
+                <div class="absolute top-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
+                <div class="text-center mb-4">
+                    <span class="text-slate-300 font-black text-sm tracking-widest uppercase border-b-2 border-cyan-500 pb-1">${title}</span>
+                </div>
+                <div class="grid grid-cols-4 grid-rows-4 w-full aspect-square border-2 border-slate-600 bg-slate-900 text-lg font-medium max-w-[22rem] shadow-inner">
+                    ${r(11)}${r(0)}${r(1)}${r(2)}
+                    ${r(10)}
+                    <div class="center-box bg-slate-900/50 flex items-center justify-center border border-slate-700 shadow-inner">
+                        <span class="text-5xl text-slate-700/50 select-none">ॐ</span>
+                    </div>
+                    ${r(3)}
+                    ${r(9)}${r(4)}
+                    ${r(8)}${r(7)}${r(6)}${r(5)}
+                </div>
+            </div>`;
+            
+            document.getElementById(containerId).innerHTML = gridHtml;
+        }
+
+        function generate() {
+            hideError();
+            try {
+                const dateStr = document.getElementById('inputDate').value;
+                const timeStr = document.getElementById('inputTime').value;
+                const tzOffset = parseFloat(document.getElementById('inputTz').value);
+                const lat = parseFloat(document.getElementById('inputLat').value);
+                const lon = parseFloat(document.getElementById('inputLon').value);
+                const vehicleInput = document.getElementById('inputVehicle').value;
+                const purchaseDateStr = document.getElementById('inputPurchaseDate').value;
+
+                if (!dateStr || !timeStr || isNaN(tzOffset) || isNaN(lat) || isNaN(lon)) {
+                    throw new Error("Please fill out all the configuration fields correctly.");
+                }
+
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+
+                let dateObj = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds || 0));
+                dateObj = new Date(dateObj.getTime() - (tzOffset * 3600000));
+
+                const time = new Astronomy.AstroTime(dateObj);
+                const ayanamsa = getLahiriAyanamsa(dateObj);
+
+                const getPlanetPos = (planetStr) => {
+                    const body = Astronomy.Body[planetStr];
+                    const ecliptic = Astronomy.Ecliptic(Astronomy.GeoVector(body, time, true));
+                    let siderealLon = (ecliptic.elon - ayanamsa + 360) % 360;
+                    return { rasi: Math.floor(siderealLon / 30), degree: siderealLon % 30, totalLon: siderealLon };
+                };
+
+                const rahuLon = getRahuLongitude(dateObj, ayanamsa);
+                const ascData = getAscendant(dateObj, lat, lon, ayanamsa);
+                
+                const planets = {
+                    Sun: getPlanetPos('Sun'), Moon: getPlanetPos('Moon'),
+                    Mars: getPlanetPos('Mars'), Mercury: getPlanetPos('Mercury'),
+                    Jupiter: getPlanetPos('Jupiter'), Venus: getPlanetPos('Venus'),
+                    Saturn: getPlanetPos('Saturn'),
+                    Rahu: { rasi: Math.floor(rahuLon / 30), degree: rahuLon % 30, totalLon: rahuLon },
+                    Ketu: { rasi: Math.floor(((rahuLon + 180) % 360) / 30), degree: ((rahuLon + 180) % 360) % 30, totalLon: (rahuLon + 180) % 360 },
+                    Asc: { rasi: ascData.rasi, degree: ascData.degree, totalLon: ascData.rasi * 30 + ascData.degree }
+                };
+
+                let d1 = {}, d9 = {}, d16 = {}, d60 = {};
+
+                // --- 1. Compute Divisional Coordinates ---
+                Object.keys(planets).forEach(p => {
+                    const rasi = planets[p].rasi;
+                    const deg = planets[p].degree;
+                    const totalLon = planets[p].totalLon;
+                    const label = planetLabels[p];
+                    
+                    const color = p === 'Asc' ? 'text-cyan-400 font-extrabold' : 'text-slate-200 font-medium';
+                    const genHtml = (degStr) => `<div class="flex flex-col items-center leading-none mx-0.5 my-1 z-10"><span class="${color} text-xs">${label}</span>${degStr ? `<span class="text-[8px] text-slate-500">${degStr}</span>` : ''}</div>`;
+
+                    // D1 - Rasi
+                    d1[p] = { rasi: rasi, html: genHtml(formatDeg(deg)) };
+
+                    // D9 - Navamsha
+                    const d9Rasi = Math.floor(totalLon / (10/3)) % 12;
+                    d9[p] = { rasi: d9Rasi, html: genHtml() };
+
+                    // D16 - Shodashamsha (Parashara)
+                    const isMovable = [0,3,6,9].includes(rasi);
+                    const isFixed = [1,4,7,10].includes(rasi);
+                    const startRasi = isMovable ? 0 : isFixed ? 4 : 8;
+                    const partD16 = Math.floor(deg / 1.875);
+                    const d16Rasi = (startRasi + partD16) % 12;
+                    d16[p] = { rasi: d16Rasi, html: genHtml() };
+
+                    // D60 - Shashtiamsha (Parashara)
+                    const partD60 = Math.floor(deg * 2);
+                    const d60Rasi = (rasi + partD60) % 12;
+                    d60[p] = { rasi: d60Rasi, html: genHtml() };
+                });
+
+                // --- 1.5. Calculate D16 Arudha Lagna (AL) ---
+                const d16AscRasi = d16['Asc'].rasi;
+                const d16AscLord = rasiLords[d16AscRasi];
+                const d16LordRasi = d16[d16AscLord].rasi;
+                
+                // Distance from Asc to Lord
+                let distToLord = (d16LordRasi - d16AscRasi + 12) % 12;
+                // Project distance from Lord
+                let alPos = (d16LordRasi + distToLord) % 12;
+                
+                // Exceptions (If lands in 1st, AL moves to 10th. If lands in 7th, moves to 4th)
+                if (alPos === d16AscRasi) alPos = (d16AscRasi + 9) % 12; 
+                if (alPos === (d16AscRasi + 6) % 12) alPos = (d16AscRasi + 3) % 12;
+                
+                // Plot AL in D16 chart
+                d16['AL'] = {
+                    rasi: alPos,
+                    html: `<div class="flex flex-col items-center justify-center mx-0.5 my-1 px-1.5 py-0.5 bg-indigo-900/80 border border-indigo-500 text-indigo-300 rounded shadow z-10"><span class="font-bold text-[10px]">AL</span></div>`
+                };
+
+                // --- 1.6. Determine Vehicle Type Recommendation (D16 4th House) ---
+                const d16House4Rasi = (d16AscRasi + 3) % 12;
+                let planetsIn4th = [];
+                Object.keys(d16).forEach(pKey => {
+                    if (pKey !== 'Asc' && pKey !== 'AL' && pKey !== 'V-Mount' && d16[pKey].rasi === d16House4Rasi) {
+                        planetsIn4th.push(pKey);
+                    }
+                });
+                
+                let vehicleInfluencePlanet = planetsIn4th.length > 0 ? planetsIn4th[0] : rasiLords[d16House4Rasi];
+                if(planetsIn4th.includes('Mars')) vehicleInfluencePlanet = 'Mars'; // Prioritize Mars if multiple
+                if(planetsIn4th.includes('Venus')) vehicleInfluencePlanet = 'Venus';
+                let recommendedCarType = vehicleTypeMap[vehicleInfluencePlanet] || "Standard daily driver.";
+
+                // --- 1.7. Calculate D1 Family Targets (4H, 4L, A4) ---
+                const d1AscRasi = d1['Asc'].rasi;
+                const d1House4Rasi = (d1AscRasi + 3) % 12;
+                const d1Lord4 = rasiLords[d1House4Rasi];
+                const d1Lord4Rasi = d1[d1Lord4].rasi;
+                
+                let d1PlanetsIn4H = [];
+                Object.keys(d1).forEach(pKey => {
+                    if (pKey !== 'Asc' && d1[pKey].rasi === d1House4Rasi) d1PlanetsIn4H.push(pKey);
+                });
+
+                // Calculate A4 (Vahana Pada)
+                let dist4toLord = (d1Lord4Rasi - d1House4Rasi + 12) % 12;
+                let a4Pos = (d1Lord4Rasi + dist4toLord) % 12;
+                if (a4Pos === d1House4Rasi) a4Pos = (d1House4Rasi + 9) % 12; // Lands in 1st from itself, moves to 10th
+                if (a4Pos === (d1House4Rasi + 6) % 12) a4Pos = (d1House4Rasi + 3) % 12; // Lands in 7th from itself, moves to 4th
+
+                let d1PlanetsInA4 = [];
+                Object.keys(d1).forEach(pKey => {
+                    if (pKey !== 'Asc' && d1[pKey].rasi === a4Pos) d1PlanetsInA4.push(pKey);
+                });
+
+                // Plot A4 in D1 Chart
+                d1['A4'] = {
+                    rasi: a4Pos,
+                    html: `<div class="flex flex-col items-center justify-center mx-0.5 my-1 px-1.5 py-0.5 bg-emerald-900/80 border border-emerald-500 text-emerald-300 rounded shadow z-10"><span class="font-bold text-[10px]">A4</span></div>`
+                };
+
+                // Populate D1 Targets UI
+                document.getElementById('dashD1_4H_Rasi').innerText = rasiNames[d1House4Rasi];
+                document.getElementById('dashD1_4H_Planets').innerText = d1PlanetsIn4H.length > 0 ? d1PlanetsIn4H.join(', ') : 'Empty';
+                document.getElementById('dashD1_4L').innerText = d1Lord4;
+                document.getElementById('dashD1_4L_Rasi').innerText = rasiNames[d1Lord4Rasi];
+                document.getElementById('dashD1_A4_Rasi').innerText = rasiNames[a4Pos];
+                document.getElementById('dashD1_A4_Planets').innerText = d1PlanetsInA4.length > 0 ? d1PlanetsInA4.join(', ') : 'Empty';
+
+
+                // --- 2. VNR / VNG Calculator (Vehicle Number Logic) ---
+                let vehicleAnalysisText = "";
+                let unit4CaseStudyText = "";
+                const numStr = vehicleInput.replace(/\D/g, '');
+                
+                const dashEl = document.getElementById('vehicleDashboard');
+                if (numStr.length > 0) {
+                    const num = parseInt(numStr, 10);
+                    if (!isNaN(num)) {
+                        // VNR = (Num / 12) Remainder Rasi
+                        let rem12 = num % 12;
+                        let vnrRasi = (rem12 === 0 ? 12 : rem12) - 1; 
+
+                        // VNG = Single digit sum -> Graha
+                        let vngNum = num % 9;
+                        if (vngNum === 0) vngNum = 9;
+                        const vngMap = {1: 'Sun', 2: 'Moon', 3: 'Jupiter', 4: 'Rahu', 5: 'Mercury', 6: 'Venus', 7: 'Ketu', 8: 'Saturn', 9: 'Mars'};
+                        const vngLabelMap = {1: 'Su', 2: 'Mo', 3: 'Ju', 4: 'Ra', 5: 'Me', 6: 'Ve', 7: 'Ke', 8: 'Sa', 9: 'Ma'};
+                        const vngGrahaStr = vngMap[vngNum];
+                        const vngGrahaLbl = vngLabelMap[vngNum];
+
+                        // Calculate Manifestation distance from AL to VNR (1-12)
+                        let houseFromAl = (vnrRasi - alPos + 12) % 12 + 1;
+                        let manifestation = arudhaTemplate[houseFromAl];
+
+                        // Plot the Arudha specifically in D16 (as instructed in Teaching Unit)
+                        d16['V-Mount'] = {
+                            rasi: vnrRasi,
+                            html: `<div class="flex flex-col items-center justify-center mx-0.5 my-1 px-1.5 py-0.5 bg-yellow-400 border-2 border-slate-900 text-slate-900 rounded shadow z-20">
+                                <span class="font-black text-[9px] whitespace-nowrap uppercase tracking-wider">Veh[${vngGrahaLbl}]</span>
+                            </div>`
+                        };
+
+                        // Populate Visual Dashboard
+                        document.getElementById('dashVnr').innerText = `${rasiNames[vnrRasi]} (${vnrRasi+1})`;
+                        document.getElementById('dashVng').innerText = `${vngGrahaStr} (${vngNum})`;
+                        document.getElementById('dashAl').innerText = `${rasiNames[alPos]}`;
+                        document.getElementById('dashHouseFromAl').innerText = `${houseFromAl}${houseFromAl === 1 ? 'st' : houseFromAl === 2 ? 'nd' : houseFromAl === 3 ? 'rd' : 'th'} house`;
+                        document.getElementById('dashManifestation').innerText = manifestation;
+                        document.getElementById('dash4thInfo').innerText = planetsIn4th.length > 0 ? `Occupants: ${planetsIn4th.join(',')}` : `Lord: ${vehicleInfluencePlanet}`;
+                        document.getElementById('dashCarType').innerText = recommendedCarType;
+                        dashEl.classList.remove('hidden');
+                        dashEl.classList.add('grid');
+
+                        // Construct Text Report Data
+                        vehicleAnalysisText += `[UNIT 2] VEHICLE MOUNT ANALYSIS (VNR/VNG & AL)\n`;
+                        vehicleAnalysisText += `-------------------------------------------\n`;
+                        vehicleAnalysisText += `Original Input      : ${vehicleInput}\n`;
+                        vehicleAnalysisText += `Isolated Digits     : ${num}\n\n`;
+                        vehicleAnalysisText += `VNR (Vehicle Rāśi)  : ${num} / 12 = Remainder ${rem12 || 12}\n`;
+                        vehicleAnalysisText += `                      Rāśi -> ${rasiNames[vnrRasi]}\n\n`;
+                        vehicleAnalysisText += `VNG (Vehicle Graha) : Sum of digits to single digit -> ${vngNum}\n`;
+                        vehicleAnalysisText += `                      Graha -> ${vngGrahaStr}\n\n`;
+                        vehicleAnalysisText += `Ārūḍha Lagna (AL)   : Calculated D16 AL sits in ${rasiNames[alPos]}\n`;
+                        vehicleAnalysisText += `Mount Placement     : The Vehicle Mount sits in the ${houseFromAl}H from AL.\n`;
+                        vehicleAnalysisText += `Manifestation       : According to the Arudha Template, this vehicle brings:\n`;
+                        vehicleAnalysisText += `                      *** ${manifestation.toUpperCase()} ***\n\n`;
+                        vehicleAnalysisText += `VEHICLE TYPE RECOMMENDATION\n`;
+                        vehicleAnalysisText += `-------------------------------------------\n`;
+                        vehicleAnalysisText += `D16 4th House Eval  : ${planetsIn4th.length > 0 ? `Planet(s) ${planetsIn4th.join(', ')} occupy` : `Lord ${vehicleInfluencePlanet} rules`} the 4th house.\n`;
+                        vehicleAnalysisText += `Recommended Type    : ${recommendedCarType}\n\n`;
+                        vehicleAnalysisText += `TIMING RULE FOR PURCHASE\n`;
+                        vehicleAnalysisText += `-------------------------------------------\n`;
+                        vehicleAnalysisText += `A vehicle MUST be purchased during the pratyantara daśā of a planet\n`;
+                        vehicleAnalysisText += `that has a positive influence on the 4th house in D16 (ideally the 4th lord).\n\n`;
+
+                        // --- 3. TEACHING UNIT 4: Vimshottari Timing & Placement Logic ---
+                        if (purchaseDateStr) {
+                            // Vimshottari Dasha calculation at exact purchase date
+                            let mLon = planets['Moon'].totalLon;
+                            let nakIdx = Math.floor(mLon / (360/27));
+                            let dIdx = nakIdx % 9;
+                            let fracT = (mLon % (360/27)) / (360/27);
+                            let balYears = (1 - fracT) * dashaYears[dIdx];
+
+                            let pDateObj = new Date(purchaseDateStr);
+                            let diffY = (pDateObj.getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+
+                            let mdLord = '', adLord = '', pdLord = '';
+                            if (diffY >= 0) {
+                                let accum = balYears, currIdx = dIdx;
+                                while (diffY > accum) {
+                                    currIdx = (currIdx + 1) % 9;
+                                    accum += dashaYears[currIdx];
+                                }
+                                mdLord = dashaLords[currIdx];
+                                let mdStart = accum - (currIdx === dIdx ? balYears : dashaYears[currIdx]);
+                                let remY = diffY - mdStart;
+                                
+                                let mdTotal = dashaYears[currIdx], adAccum = 0, adIdx = currIdx;
+                                while (true) {
+                                    let adLen = (mdTotal * dashaYears[adIdx]) / 120;
+                                    if (remY <= adAccum + adLen) {
+                                        adLord = dashaLords[adIdx];
+                                        let remAd = remY - adAccum;
+                                        let pdAccum = 0, pdIdx = adIdx;
+                                        while (true) {
+                                            let pdLen = (mdTotal * dashaYears[adIdx] * dashaYears[pdIdx]) / 14400;
+                                            if (remAd <= pdAccum + pdLen) {
+                                                pdLord = dashaLords[pdIdx];
+                                                break;
+                                            }
+                                            pdAccum += pdLen;
+                                            pdIdx = (pdIdx + 1) % 9;
+                                        }
+                                        break;
+                                    }
+                                    adAccum += adLen;
+                                    adIdx = (adIdx + 1) % 9;
+                                }
+                            }
+
+                            // Generate Unit 4 Specific Messages
+                            let alMsg = `${houseFromAl}th house from AL.`;
+                            if (houseFromAl === 8) alMsg = "8th house from AL (Debts and Ruin). Disaster follows.";
+                            if (houseFromAl === 11) alMsg = "11th house from AL. Income increases, helps get out of debt.";
+
+                            let occ = [];
+                            Object.keys(d16).forEach(p => { if (p !== 'Asc' && p !== 'AL' && p !== 'A4' && p !== 'V-Mount' && d16[p].rasi === vnrRasi) occ.push(p); });
+
+                            let timingMsg = `Bought in <strong class="text-amber-400">${pdLord}</strong> Pratyantara daśā. `;
+                            if (pdLord && d16[pdLord] && d16[pdLord].rasi === d16House4Rasi) {
+                                timingMsg += `<br/><span class="text-red-500 font-bold block mt-1">Timing Error: ${pdLord} is placed in the 4th house of D16. Using a malefic's pratyantara to choose a vehicle will cause a fall!</span>`;
+                            }
+
+                            document.getElementById('unit4Container').innerHTML = `
+                                <div class="bg-slate-800 border border-rose-900/50 p-6 shadow-xl text-sm text-slate-300 relative overflow-hidden rounded-xl">
+                                    <div class="absolute top-0 right-0 w-24 h-24 bg-rose-900/20 rounded-bl-full -z-10"></div>
+                                    <h3 class="font-bold text-rose-400 text-lg mb-4 flex items-center gap-2">
+                                        Teaching Unit 4: Case Study Analysis
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <h4 class="text-xs font-bold text-rose-500 uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">Registration Eval</h4>
+                                            <p class="mb-1"><strong>Vehicle Number:</strong> <span class="text-slate-100">${num}</span></p>
+                                            <p class="mb-1"><strong>VNR (Vehicle Rāśi):</strong> <span class="text-slate-100">${rasiNames[vnrRasi]}</span> <span class="text-xs text-slate-500">(Rem ${rem12 || 12})</span></p>
+                                            <p><strong>VNG (Vehicle Graha):</strong> <span class="text-slate-100">${vngGrahaStr}</span> <span class="text-xs text-slate-500">(Digit Root)</span></p>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-rose-500 uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">Placement Error (D16)</h4>
+                                            <p class="mb-1"><strong>D16 Ārūḍha (AL):</strong> <span class="text-slate-100">${rasiNames[alPos]}</span></p>
+                                            <p class="mb-1"><strong>VNR Placement:</strong> Vehicle sits in the <span class="${houseFromAl === 8 ? 'text-red-500 font-bold' : (houseFromAl === 11 ? 'text-emerald-400 font-bold' : 'text-slate-100 font-medium')}">${alMsg}</span></p>
+                                            <p><strong>Planets in VNR (D16):</strong> <span class="text-slate-100">${occ.length > 0 ? occ.join(', ') + ' <span class="text-xs text-slate-500">(Check for Candrāṣṭama)</span>' : 'None'}</span></p>
+                                        </div>
+                                    </div>
+                                    <hr class="my-4 border-slate-700">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-rose-500 uppercase tracking-widest border-b border-slate-700 pb-1 mb-2">Timing Error (Vimshottari)</h4>
+                                        <p class="mb-1"><strong>Purchase Date:</strong> <span class="text-slate-100">${purchaseDateStr}</span> falls in <strong class="text-amber-400">${mdLord} MD &rarr; ${adLord} AD &rarr; ${pdLord} PD</strong>.</p>
+                                        <p>${timingMsg}</p>
+                                    </div>
+                                    <div class="mt-4 p-4 bg-slate-900 border-l-4 border-emerald-500 text-slate-300 shadow-inner rounded-r-lg">
+                                        <span class="font-bold text-emerald-400 text-xs uppercase tracking-widest block mb-1">Remedial Advice</span>
+                                        Look for a link to pull the native out of the mess. E.g., Use a VNR divisible by 12 (Pisces, Rem 0/12) if Pisces is the 11th house from AL. This increases income to overcome debt!
+                                    </div>
+                                </div>
+                            `;
+
+                            // Append to Text Report
+                            unit4CaseStudyText += `[UNIT 4] WRONG VEHICLE CHOICE CASE STUDY\n`;
+                            unit4CaseStudyText += `-------------------------------------------\n`;
+                            unit4CaseStudyText += `Purchase Dasha      : ${mdLord} MD -> ${adLord} AD -> ${pdLord} PD\n`;
+                            unit4CaseStudyText += `VNR from AL         : ${alMsg}\n`;
+                            unit4CaseStudyText += `Planets in VNR      : ${occ.length > 0 ? occ.join(', ') : 'None'}\n\n`;
+                        }
+                    }
+                } else {
+                    dashEl.classList.add('hidden');
+                    dashEl.classList.remove('grid');
+                    document.getElementById('unit4Container').innerHTML = '';
+                }
+
+                // Add Shared Family Vehicle Report Text
+                let sharedVehicleText = `SHARED FAMILY VEHICLE TARGETS (D1 Chart)\n`;
+                sharedVehicleText += `-------------------------------------------\n`;
+                sharedVehicleText += `VNG (Practical Compatibility): Compare the following D1 chart targets\n`;
+                sharedVehicleText += `with your partner's chart. The common, well-placed planet dictates the\n`;
+                sharedVehicleText += `ideal Car Color and Brand (e.g., Saturn = 'M' for Mercedes).\n\n`;
+                sharedVehicleText += `4H (4th House) : ${rasiNames[d1House4Rasi]} | Occupants: ${d1PlanetsIn4H.length > 0 ? d1PlanetsIn4H.join(', ') : 'None'}\n`;
+                sharedVehicleText += `4L (4th Lord)  : ${d1Lord4} | Placed in: ${rasiNames[d1Lord4Rasi]}\n`;
+                sharedVehicleText += `A4 (Vahana Pada): ${rasiNames[a4Pos]} | Occupants: ${d1PlanetsInA4.length > 0 ? d1PlanetsInA4.join(', ') : 'None'}\n\n`;
+
+                // Render Chart Grids
+                renderSouthIndianChart('chart-d1', 'D1 Rasi', d1);
+                renderSouthIndianChart('chart-d9', 'D9 Navamsha', d9);
+                renderSouthIndianChart('chart-d16', 'D16 Shodashamsha', d16);
+                renderSouthIndianChart('chart-d60', 'D60 Shashtiamsha', d60);
+
+                // --- 4. Generate Formatted Text Report ---
+                let personName = document.getElementById('inputName').value.trim();
+                let textOut = `Chart Analysis for: ${personName}\n===========================================\n\n`;
+                
+                // Add D1 Family Targets to top of report
+                textOut += sharedVehicleText + `===========================================\n\n`;
+
+                // Add VNR/VNG details
+                if (vehicleAnalysisText) textOut += vehicleAnalysisText + `===========================================\n\n`;
+                
+                // Add Unit 4 Case Study
+                if (unit4CaseStudyText) textOut += unit4CaseStudyText + `===========================================\n\n`;
+
+                document.getElementById('textReportContent').innerText = textOut.trim();
+                document.getElementById('resultsArea').classList.remove('hidden');
+
+            } catch (err) {
+                showError("Calculation Error: " + err.message);
+                console.error(err);
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('calculateBtn').addEventListener('click', generate);
+            
+            // Live Vehicle Updates
+            document.getElementById('inputVehicle').addEventListener('input', generate);
+            document.getElementById('inputPurchaseDate').addEventListener('change', generate);
+
+            // Location Search API Logic
+            document.getElementById('searchCityBtn').addEventListener('click', async () => {
+                const city = document.getElementById('inputCity').value;
+                if(!city) return;
+                const btn = document.getElementById('searchCityBtn');
+                const oldText = btn.innerText;
+                btn.innerText = '...';
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+                    const data = await res.json();
+                    if(data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        document.getElementById('inputLat').value = lat.toFixed(4);
+                        document.getElementById('inputLon').value = lon.toFixed(4);
+                        
+                        let approxTz = Math.round(lon / 15 * 2) / 2;
+                        if (lat > 8 && lat < 37 && lon > 68 && lon < 97) approxTz = 5.5; // India override rule
+                        document.getElementById('inputTz').value = approxTz;
+                        
+                        showError("Location found. Timezone auto-estimated (please verify).");
+                        document.getElementById('errorBox').classList.replace('bg-red-900/50', 'bg-emerald-900/50');
+                        document.getElementById('errorBox').classList.replace('text-red-400', 'text-emerald-400');
+                        document.getElementById('errorBox').classList.replace('border-red-800', 'border-emerald-800');
+                        
+                        setTimeout(() => {
+                            hideError();
+                            // Reset classes back to error state for next time
+                            document.getElementById('errorBox').classList.replace('bg-emerald-900/50', 'bg-red-900/50');
+                            document.getElementById('errorBox').classList.replace('text-emerald-400', 'text-red-400');
+                            document.getElementById('errorBox').classList.replace('border-emerald-800', 'border-red-800');
+                        }, 4000);
+                    } else {
+                        showError("City not found. Please enter Lat/Lng manually.");
+                    }
+                } catch (e) {
+                    showError("Search failed. Try again or enter manually.");
+                }
+                btn.innerText = oldText;
+            });
+            
+            // Tab Navigation Logic
+            const tabChart = document.getElementById('tab-chart');
+            const tabVehicle = document.getElementById('tab-vehicle');
+            const tabUnit4 = document.getElementById('tab-unit4');
+            const btnTabChart = document.getElementById('btnTabChart');
+            const btnTabVehicle = document.getElementById('btnTabVehicle');
+            const btnTabUnit4 = document.getElementById('btnTabUnit4');
+
+            btnTabChart.addEventListener('click', () => {
+                btnTabChart.className = 'pb-2 text-cyan-400 border-b-2 border-cyan-400 font-bold transition-colors';
+                btnTabVehicle.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                btnTabUnit4.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                tabChart.classList.remove('hidden');
+                tabVehicle.classList.add('hidden');
+                tabUnit4.classList.add('hidden');
+            });
+
+            btnTabUnit4.addEventListener('click', () => {
+                btnTabUnit4.className = 'pb-2 text-cyan-400 border-b-2 border-cyan-400 font-bold transition-colors';
+                btnTabChart.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                btnTabVehicle.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                tabUnit4.classList.remove('hidden');
+                tabChart.classList.add('hidden');
+                tabVehicle.classList.add('hidden');
+            });
+
+            btnTabVehicle.addEventListener('click', () => {
+                btnTabVehicle.className = 'pb-2 text-cyan-400 border-b-2 border-cyan-400 font-bold transition-colors';
+                btnTabChart.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                btnTabUnit4.className = 'pb-2 text-slate-500 hover:text-slate-300 font-medium transition-colors';
+                tabVehicle.classList.remove('hidden');
+                tabChart.classList.add('hidden');
+                tabUnit4.classList.add('hidden');
+            });
+
+            // Reverse Vehicle Search Logic
+            document.getElementById('searchVehicleBtn').addEventListener('click', () => {
+                const targetRasi = parseInt(document.getElementById('searchRasi').value);
+                const targetGraha = parseInt(document.getElementById('searchGraha').value);
+                
+                const matches = [];
+                
+                // Helper to sum digits iteratively until a single digit is reached
+                const getSingleDigit = (numStr) => {
+                    let sum = numStr.split('').reduce((a, b) => a + parseInt(b), 0);
+                    while (sum > 9) {
+                        sum = String(sum).split('').reduce((a, b) => a + parseInt(b), 0);
+                    }
+                    return sum;
+                };
+
+                for (let i = 1; i <= 9999; i++) {
+                    let numStr = String(i).padStart(4, '0');
+                    
+                    // VNR calculation: num / 12 remainder mapped to 0-11
+                    let rem12 = i % 12;
+                    let vnrRasi = (rem12 === 0 ? 12 : rem12) - 1;
+                    
+                    // VNG calculation: single digit sum 
+                    let vngNum = getSingleDigit(numStr);
+
+                    if (vnrRasi === targetRasi && vngNum === targetGraha) {
+                        matches.push(numStr);
+                    }
+                }
+
+                document.getElementById('matchCount').innerText = `${matches.length} matches found`;
+                const grid = document.getElementById('vehicleMatchesGrid');
+                grid.innerHTML = matches.map(num => `<div class="bg-slate-900 border border-slate-700 py-2 rounded-lg shadow-inner hover:bg-slate-700 transition-colors font-bold tracking-widest">${num}</div>`).join('');
+                document.getElementById('vehicleSearchResults').classList.remove('hidden');
+            });
+
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const text = document.getElementById('textReportContent').innerText;
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    const btn = document.getElementById('copyBtn');
+                    btn.innerText = 'Copied!';
+                    btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+                    setTimeout(() => {
+                        btn.innerText = 'Copy Report';
+                        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+                    }, 2000);
+                } catch(e) { console.error('Copy failed', e); }
+                document.body.removeChild(textarea);
+            });
+
+            document.getElementById('copyPlatesBtn').addEventListener('click', () => {
+                const gridElements = document.getElementById('vehicleMatchesGrid').children;
+                if(gridElements.length === 0) return;
+                const numbers = Array.from(gridElements).map(el => el.innerText).join('    ');
+                const textarea = document.createElement('textarea');
+                textarea.value = numbers;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    const btn = document.getElementById('copyPlatesBtn');
+                    const originalText = btn.innerText;
+                    btn.innerText = 'COPIED!';
+                    btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+                    setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+                    }, 2000);
+                } catch(e) { console.error('Copy failed', e); }
+                document.body.removeChild(textarea);
+            });
+
+            generate(); // Boot instance
+        };
+    </script>
+</body>
+</html>
